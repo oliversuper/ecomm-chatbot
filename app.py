@@ -3,62 +3,59 @@ import json
 import os
 
 app = Flask(__name__)
-
 ORDERS_FILE = "orders.json"
 
-# Function to load orders from JSON file
 def load_orders():
+    """Loads existing orders from the JSON file."""
     if os.path.exists(ORDERS_FILE):
         with open(ORDERS_FILE, "r") as file:
             try:
                 return json.load(file)
             except json.JSONDecodeError:
-                return {}  # Return empty dictionary if file is empty or corrupted
+                return {}  # Return empty dict if file is corrupted
     return {}
 
-# Function to save orders to JSON file
 def save_orders(orders):
+    """Saves orders to the JSON file."""
     with open(ORDERS_FILE, "w") as file:
-        json.dump(orders, file, indent=4)  # Saves the file in a readable format
+        json.dump(orders, file, indent=4)
 
 @app.route("/chat", methods=["POST"])
 def chat():
     data = request.get_json()
-    message = data.get("message", "").lower()
-    orders = load_orders()  # Load existing orders
-
-    # Basic greeting
-    if "hello" in message or "hi" in message:
-        return jsonify({"response": "Hey there! How can I help?"})
-
-    # Product recommendation
-    if "recommend something" in message:
-        return jsonify({"response": "I recommend Sony Headphones"})
-
-    if "recommend shoes" in message:
-        return jsonify({"response": "I recommend Nike Air Force 1!"})
-
-    if "recommend electronics" in message:
-        return jsonify({"response": "I recommend Apple AirPods!"})
-
-    if "recommend clothing" in message:
-        return jsonify({"response": "I recommend a Nike T-Shirt!"})
-
-    # Placing an order
-    if "place order" in message:
-        new_order_id = f"{len(orders) + 1:05d}"  # Generate new order ID (e.g., 00001)
+    message = data.get("message", "").strip().lower()
+    
+    orders = load_orders()  # Load orders from file
+    
+    if message == "place order":
+        new_order_id = str(len(orders) + 1).zfill(5)  # Generate order ID like "00001"
         orders[new_order_id] = "Out for Delivery"
-        save_orders(orders)
+        save_orders(orders)  # Save updated orders
         return jsonify({"response": f"Your order has been placed! Your order number is {new_order_id}."})
-
-    # Checking order status
-    if "order" in message:
-        order_id = message.replace("order ", "").strip()
+    
+    elif message.startswith("order"):
+        order_id = message.split(" ")[-1].zfill(5)  # Extract order number
         if order_id in orders:
             return jsonify({"response": f"Order {order_id} is currently: {orders[order_id]}"})
-        return jsonify({"response": "Order not found. Please check your order number."})
+        else:
+            return jsonify({"response": "Order not found. Please check your order number."})
 
-    return jsonify({"response": "Sorry, I didn't understand that. Can you please rephrase?"})
+    # Fix recommendation feature
+    elif "recommend" in message:
+        if "shoes" in message:
+            return jsonify({"response": "I recommend Nike Air Force 1!"})
+        elif "electronics" in message:
+            return jsonify({"response": "I recommend Apple AirPods!"})
+        elif "clothing" in message:
+            return jsonify({"response": "I recommend a Nike T-Shirt!"})
+        else:
+            return jsonify({"response": "I recommend Sony Headphones!"})  # Default recommendation
+
+    # Greeting
+    elif "hello" in message or "hi" in message:
+        return jsonify({"response": "Hey there! How can I help?"})
+    
+    return jsonify({"response": "Invalid request."})
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5001, debug=True)
