@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify, render_template
 import json
 import os
-import openai  # AI integration
+import anthropic  # Claude AI integration
 
 app = Flask(__name__)
 
@@ -12,8 +12,8 @@ if not os.path.exists(TEMPLATES_FOLDER):
 
 ORDERS_FILE = "orders.json"
 
-# OpenAI API Key (Replace with your own)
-openai.api_key = "YOUR_OPENAI_API_KEY"
+# Claude AI API Key (Replace with your own)
+client = anthropic.Anthropic(api_key="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")
 
 # Load orders
 def load_orders():
@@ -33,6 +33,15 @@ def save_orders(orders):
 @app.route("/")
 def home():
     return render_template("index.html")
+
+# Function to get response from Claude AI
+def get_claude_response(user_message):
+    response = client.messages.create(
+        model="claude-2",  # Change to "claude-3" if available
+        max_tokens=200,
+        messages=[{"role": "user", "content": user_message}]
+    )
+    return response.content
 
 # Chatbot with AI responses
 @app.route("/chat", methods=["POST"])
@@ -61,17 +70,10 @@ def chat():
     elif any(keyword in message.lower() for keyword in ["recommend", "suggest", "buy", "looking for"]):
         return jsonify({"response": "I can help with that! What category? (Shoes, Electronics, Clothing, etc.)"})
 
-    # Step 2: AI-powered conversation
+    # Step 2: AI-powered conversation using Claude AI
     try:
-        ai_response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": "You are an AI assistant for an e-commerce store. You help with product recommendations, order tracking, and general inquiries."},
-                {"role": "user", "content": message}
-            ]
-        )
-        response_text = ai_response["choices"][0]["message"]["content"]
-        return jsonify({"response": response_text})
+        ai_response = get_claude_response(message)
+        return jsonify({"response": ai_response})
     except Exception as e:
         return jsonify({"response": "I'm having trouble responding right now. Try again later!"})
 
