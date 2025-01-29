@@ -12,8 +12,15 @@ if not os.path.exists(TEMPLATES_FOLDER):
 
 ORDERS_FILE = "orders.json"
 
-# Claude AI API Key (Replace with your own)
-client = anthropic.Anthropic(api_key="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")
+# Retrieve API Key from environment variable
+API_KEY = os.getenv("ANTHROPIC_API_KEY")  # Use the key you set in Render
+
+# Check if API key is set
+if not API_KEY:
+    raise ValueError("Missing API Key: Set ANTHROPIC_API_KEY in environment variables.")
+
+# Initialize Claude AI client
+client = anthropic.Anthropic(api_key=API_KEY)
 
 # Load orders
 def load_orders():
@@ -36,12 +43,15 @@ def home():
 
 # Function to get response from Claude AI
 def get_claude_response(user_message):
-    response = client.messages.create(
-        model="claude-2",  # Change to "claude-3" if available
-        max_tokens=200,
-        messages=[{"role": "user", "content": user_message}]
-    )
-    return response.content
+    try:
+        response = client.messages.create(
+            model="claude-2",
+            max_tokens=200,
+            messages=[{"role": "user", "content": user_message}]
+        )
+        return response.content
+    except Exception as e:
+        return f"Error communicating with AI: {str(e)}"
 
 # Chatbot with AI responses
 @app.route("/chat", methods=["POST"])
@@ -71,11 +81,8 @@ def chat():
         return jsonify({"response": "I can help with that! What category? (Shoes, Electronics, Clothing, etc.)"})
 
     # Step 2: AI-powered conversation using Claude AI
-    try:
-        ai_response = get_claude_response(message)
-        return jsonify({"response": ai_response})
-    except Exception as e:
-        return jsonify({"response": "I'm having trouble responding right now. Try again later!"})
+    ai_response = get_claude_response(message)
+    return jsonify({"response": ai_response})
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5001, debug=True)
