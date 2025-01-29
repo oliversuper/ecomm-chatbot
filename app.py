@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 import json
 import os
 
@@ -19,6 +19,11 @@ def save_orders(orders):
     """Saves orders to the JSON file."""
     with open(ORDERS_FILE, "w") as file:
         json.dump(orders, file, indent=4)
+
+# Serve the HTML Dashboard
+@app.route("/")
+def home():
+    return render_template("index.html")
 
 @app.route("/chat", methods=["POST"])
 def chat():
