@@ -1,13 +1,11 @@
 import os
-import anthropic  # Ensure this is in requirements.txt
 from flask import Flask, request, jsonify
+import anthropic  # Claude AI integration
 
 app = Flask(__name__)
 
-# Anthropic API Key (Claude AI)
+# AI API Key
 ANTHROPIC_API_KEY = "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"
-
-# Initialize Anthropic Client
 client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
 
 @app.route("/")
@@ -16,26 +14,25 @@ def home():
 
 @app.route("/chat", methods=["POST"])
 def chat():
-    """Handles chatbot messages."""
-    user_input = request.json.get("message", "")
-
-    if not user_input:
-        return jsonify({"error": "No message provided"}), 400
-
     try:
+        data = request.get_json()
+        user_message = data.get("message", "")
+
+        if not user_message:
+            return jsonify({"error": "Message is required"}), 400
+
+        # Send user message to AI
         response = client.messages.create(
-            model="claude-2.1",
-            max_tokens=200,
-            messages=[{"role": "user", "content": user_input}]
+            model="claude-3-opus-20240229",
+            max_tokens=300,
+            messages=[{"role": "user", "content": user_message}]
         )
 
-        # Extract the AI response
-        reply = response.content[0].text if response.content else "Sorry, I couldn't generate a response."
-
-        return jsonify({"response": reply})
+        return jsonify({"response": response.content[0].text})
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+# ✅ Corrected Port Binding for Render
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=True)
