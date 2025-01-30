@@ -15,6 +15,9 @@ ORDERS_FILE = "orders.json"
 # Retrieve API Key from environment variable
 API_KEY = os.getenv("ANTHROPIC_API_KEY")  # Use the key you set in Render
 
+# Debugging: Print the API Key to check if it's being loaded correctly
+print("Loaded API Key:", API_KEY)
+
 # Check if API key is set
 if not API_KEY:
     raise ValueError("Missing API Key: Set ANTHROPIC_API_KEY in environment variables.")
@@ -45,7 +48,7 @@ def home():
 def get_claude_response(user_message):
     try:
         response = client.messages.create(
-            model="claude-2",
+            model="claude-3",
             max_tokens=200,
             messages=[{"role": "user", "content": user_message}]
         )
