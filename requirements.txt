@@ -1,4 +1,4 @@
 openai
-flask  # (if you're using Flask)
-requests  # (if your bot makes web requests)
-gunicorn  # (if needed for deployment)
+flask
+requests
+gunicorn
